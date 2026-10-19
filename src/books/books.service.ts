@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, NotImplementedException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CategoryEntity } from '../categories/entities/category.entity';
@@ -15,7 +15,7 @@ export class BooksService {
     private readonly booksRepository: Repository<BookEntity>,
     @InjectRepository(CategoryEntity)
     private readonly categoriesRepository: Repository<CategoryEntity>,
-    // TODO 2: Inject BookRulesService through this constructor.
+    private readonly bookRulesService: BookRulesService,
   ) {}
 
   async create(dto: CreateBookDto): Promise<BookEntity> {
@@ -41,8 +41,10 @@ export class BooksService {
   }
 
   async borrow(id: number): Promise<BookEntity> {
-    // TODO 2: Find the book, call the rule, subtract one copy, save and return.
-    throw new NotImplementedException('TODO 2: implement borrowing');
+        const book = await this.findOne(id);
+    this.bookRulesService.ensureCanBorrow(book);
+    book.availableCopies -= 1;
+    return this.booksRepository.save(book);
   }
 
   // The methods below are already completed. Do not change them.
