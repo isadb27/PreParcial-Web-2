@@ -44,6 +44,7 @@ describe('BooksService', () => {
   });
 
   it('borrows one copy and returns the saved book', async () => {
+    // Arrange
     const book = {
       id: 7,
       title: 'Clean Code',
@@ -52,12 +53,23 @@ describe('BooksService', () => {
     } as BookEntity;
     const savedBook = { ...book, availableCopies: 2 } as BookEntity;
 
-    // TODO TEST 2: Arrange findOne() and save() responses; call borrow(7).
-    // Assert the rule call, the saved copy count and the returned result.
-    throw new Error('TODO TEST 2: complete the successful borrowing test');
+    booksRepositoryMock.findOne.mockResolvedValue(book);
+    booksRepositoryMock.save.mockResolvedValue(savedBook);
+
+    // Act
+    const result = await service.borrow(7);
+
+    // Assert
+    expect(bookRulesServiceMock.ensureCanBorrow).toHaveBeenCalledWith(book);
+    expect(book.availableCopies).toBe(2);
+    expect(booksRepositoryMock.save).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 7, availableCopies: 2 }),
+    );
+    expect(result).toEqual(savedBook);
   });
 
   it('does not change or save a book when the rule rejects borrowing', async () => {
+    // Arrange
     const book = {
       id: 9,
       title: 'The Little Prince',
@@ -65,8 +77,14 @@ describe('BooksService', () => {
       category: { id: 2, name: 'Literature' },
     } as BookEntity;
 
-    // TODO TEST 3: Arrange findOne(); make the rule throw ConflictException.
-    // Assert the rejected operation, unchanged copies and no save() call.
-    throw new Error('TODO TEST 3: complete the rejected borrowing test');
+    booksRepositoryMock.findOne.mockResolvedValue(book);
+    bookRulesServiceMock.ensureCanBorrow.mockImplementation(() => {
+      throw new ConflictException('No copies available to borrow');
+    });
+
+    // Act and Assert
+    await expect(service.borrow(9)).rejects.toBeInstanceOf(ConflictException);
+    expect(book.availableCopies).toBe(0);
+    expect(booksRepositoryMock.save).not.toHaveBeenCalled();
   });
 });

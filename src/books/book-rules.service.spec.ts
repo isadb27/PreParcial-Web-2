@@ -10,10 +10,10 @@ describe('BookRulesService', () => {
   });
 
   it('rejects a book without available copies', () => {
+    // Arrange
     const book = { id: 3, title: 'The Little Prince', availableCopies: 0 } as BookEntity;
 
-    // TODO TEST 1: Call the real rule and check ConflictException.
-    // Replace the error below with your test. Do not leave an empty test.
-    throw new Error('TODO TEST 1: complete the rule test');
+    // Act and Assert
+    expect(() => service.ensureCanBorrow(book)).toThrow(ConflictException);
   });
 });
